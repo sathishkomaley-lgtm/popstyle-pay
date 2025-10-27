@@ -1,6 +1,6 @@
-import Razorpay from "razorpay";
+const Razorpay = require("razorpay");
 
-export default async function handler(req, res) {
+module.exports = async (req, res) => {
   if (req.method !== "POST") {
     return res.status(405).json({ message: "Method not allowed" });
   }
@@ -12,16 +12,18 @@ export default async function handler(req, res) {
     });
 
     const options = {
-      amount: 50000, // example ₹500 in paise
+      amount: 50000, // amount in paise (₹500)
       currency: "INR",
       receipt: "receipt#1",
     };
 
     const order = await razorpay.orders.create(options);
-    return res.status(200).json(order);
-
+    res.status(200).json(order);
   } catch (error) {
     console.error("Razorpay Error:", error);
-    res.status(500).json({ message: "Razorpay order creation failed", error });
+    res.status(500).json({
+      message: "Razorpay order creation failed",
+      error: error.message,
+    });
   }
-}
+};
