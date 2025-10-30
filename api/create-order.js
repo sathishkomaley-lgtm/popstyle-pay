@@ -1,9 +1,7 @@
-const Razorpay = require("razorpay");
+import Razorpay from "razorpay";
 
-module.exports = async (req, res) => {
-  if (req.method !== "POST") {
-    return res.status(405).json({ message: "Method not allowed" });
-  }
+export default async function handler(req, res) {
+  if (req.method !== "POST") return res.status(405).json({ message: "Method not allowed" });
 
   try {
     const razorpay = new Razorpay({
@@ -12,18 +10,15 @@ module.exports = async (req, res) => {
     });
 
     const options = {
-      amount: 50000, // amount in paise (₹500)
+      amount: req.body.amount * 100, // amount in paise
       currency: "INR",
-      receipt: "receipt#1",
+      receipt: receipt_${Date.now()},
     };
 
     const order = await razorpay.orders.create(options);
     res.status(200).json(order);
-  } catch (error) {
-    console.error("Razorpay Error:", error);
-    res.status(500).json({
-      message: "Razorpay order creation failed",
-      error: error.message,
-    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
   }
-};
+}
