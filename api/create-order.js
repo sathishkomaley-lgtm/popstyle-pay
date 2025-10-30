@@ -1,56 +1,60 @@
-// Allow CommonJS
-const Razorpay = require("razorpay");
+// api/create-order.js
+import Razorpay from "razorpay";
 
-module.exports = async (req, res) => {
 export default async function handler(req, res) {
-  // ✅ Add CORS headers
-  res.setHeader("Access-Control-Allow-Origin", "*");
-  res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
-
-  if (req.method === "OPTIONS") {
-    return res.status(200).end();
+  // ✅ Allow only POST requests
+  if (req.method !== "POST") {
+    return res.status(405).json({ error: "Method Not Allowed" });
   }
 
-if (req.method !== "POST") {
-    return res.status(405).json({ message: "Method not allowed" });
-    return res.status(405).json({ error: "Method Not Allowed" });
-}
+  try {
+    // ✅ Initialize Razorpay with environment variables
+    const razorpay = new Razorpay({
+      key_id: process.env.RAZORPAY_KEY_ID,
+      key_secret: process.env.RAZORPAY_KEY_SECRET,
+    });
 
-try {
-    const { amount } = req.body;
+    // ✅ Validate Razorpay keys
+    if (!process.env.RAZORPAY_KEY_ID || !process.env.RAZORPAY_KEY_SECRET) {
+      console.error("❌ Razorpay API keys missing!");
+      return res.status(500).json({
+        error: "Razorpay keys missing in environment variables",
+      });
+    }
+
+    // ✅ Get amount and currency from frontend (or set defaults)
+    const { amount, currency } = req.body;
 
     if (!amount) {
       return res.status(400).json({ error: "Amount is required" });
     }
 
-    // ✅ Initialize Razorpay instance
-const razorpay = new Razorpay({
-key_id: process.env.RAZORPAY_KEY_ID,
-key_secret: process.env.RAZORPAY_KEY_SECRET,
-});
-
+    // ✅ Create order options
     const options = {
-      amount: 50000, // amount in paise (₹500)
-    // ✅ Create order
-    const order = await razorpay.orders.create({
-      amount: amount * 100, // amount in paise
-currency: "INR",
-      receipt: "receipt#1",
+      amount: amount * 100, // Convert ₹ to paise
+      currency: currency || "INR",
+      receipt: receipt_order_${Date.now()},
     };
-      payment_capture: 1,
+
+    // ✅ Create order
+    const order = await razorpay.orders.create(options);
+
+    console.log("✅ Order created successfully:", order.id);
+
+    // ✅ Send order details to frontend
+    return res.status(200).json({
+      success: true,
+      order_id: order.id,
+      amount: order.amount,
+      currency: order.currency,
     });
 
-    const order = await razorpay.orders.create(options);
-res.status(200).json(order);
-} catch (error) {
-    console.error("Razorpay Error:", error);
-    res.status(500).json({
-      message: "Razorpay order creation failed",
+  } catch (error) {
+    console.error("❌ Razorpay order creation failed:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Server error: failed to create order",
       error: error.message,
     });
-    console.error("❌ Razorpay order error:", error);
-    res.status(500).json({ error: "Failed to create order", details: error.message });
-}
-};
+  }
 }
