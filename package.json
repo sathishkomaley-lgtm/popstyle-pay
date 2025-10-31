@@ -1,12 +1,7 @@
 {
-  "name": "popstyle-pay",
+  "name": "popstyle-payment-backend",
   "version": "1.0.0",
-  "main": "api/create-order.js",
-  "scripts": {
-    "start": "node api/create-order.js"
-  },
   "dependencies": {
-    "razorpay": "^2.9.0",
-    "crypto": "^1.0.1"
+    "razorpay": "^2.9.2"
   }
 }
