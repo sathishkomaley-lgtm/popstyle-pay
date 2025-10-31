@@ -1,31 +1,32 @@
-import crypto from "crypto";
+const crypto = require('crypto');
 
-export default async function handler(req, res) {
-  if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
+module.exports = async (req, res) => {
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method not allowed' });
+  }
 
-  const secret = process.env.RAZORPAY_WEBHOOK_SECRET;
-  const signature = req.headers["x-razorpay-signature"];
-  const body = JSON.stringify(req.body);
+  try {
+    const webhookSecret = process.env.RAZORPAY_WEBHOOK_SECRET;
+    const signature = req.headers['x-razorpay-signature'];
 
-  const expectedSignature = crypto
-    .createHmac("sha256", secret)
-    .update(body)
-    .digest("hex");
+    if (webhookSecret) {
+      const expectedSignature = crypto
+        .createHmac('sha256', webhookSecret)
+        .update(JSON.stringify(req.body))
+        .digest('hex');
 
-  if (expectedSignature === signature) {
-    const event = req.body.event;
-    const payment = req.body.payload.payment.entity;
-
-    if (event === "payment.captured") {
-      console.log("💰 Webhook: Payment success");
-      // ✅ Update DB order status to "Paid"
-    } else if (event === "payment.failed") {
-      console.log("❌ Webhook: Payment failed");
-      // ❌ Update DB order status to "Failed"
+      if (signature !== expectedSignature) {
+        return res.status(400).json({ error: 'Invalid signature' });
+      }
     }
 
-    res.status(200).json({ status: "ok" });
-  } else {
-    res.status(400).json({ error: "Invalid signature" });
+    // Process webhook event
+    const event = req.body.event;
+    console.log('Webhook event:', event);
+
+    return res.status(200).json({ received: true });
+  } catch (error) {
+    console.error('Webhook error:', error);
+    return res.status(500).json({ error: 'Webhook processing failed' });
   }
-}
+};
