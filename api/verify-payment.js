@@ -1,20 +1,41 @@
 const crypto = require('crypto');
 
 module.exports = async (req, res) => {
+  // Set CORS headers
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+
   // Handle CORS preflight
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
   }
 
   if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed' });
+    return res.status(405).json({ 
+      success: false, 
+      error: 'Method not allowed' 
+    });
   }
 
   try {
     const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
 
+    console.log('Verification request:', { razorpay_order_id, razorpay_payment_id });
+
     if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
-      return res.status(400).json({ error: 'Missing required fields' });
+      return res.status(400).json({ 
+        success: false, 
+        error: 'Missing required fields' 
+      });
+    }
+
+    if (!process.env.RAZORPAY_KEY_SECRET) {
+      console.error('RAZORPAY_KEY_SECRET not configured');
+      return res.status(500).json({ 
+        success: false, 
+        error: 'Payment gateway not configured' 
+      });
     }
 
     const body = razorpay_order_id + '|' + razorpay_payment_id;
@@ -24,6 +45,8 @@ module.exports = async (req, res) => {
       .digest('hex');
 
     const isValid = expectedSignature === razorpay_signature;
+
+    console.log('Signature validation:', isValid);
 
     if (isValid) {
       return res.status(200).json({
@@ -39,6 +62,7 @@ module.exports = async (req, res) => {
   } catch (error) {
     console.error('Verify payment error:', error);
     return res.status(500).json({
+      success: false,
       error: 'Failed to verify payment',
       message: error.message,
     });
