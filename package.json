@@ -1,7 +1,16 @@
 {
   "name": "popstyle-payment-backend",
   "version": "1.0.0",
+  "description": "Payment backend for PopStyle using Razorpay",
+  "main": "index.js",
+  "scripts": {
+    "dev": "vercel dev",
+    "deploy": "vercel --prod"
+  },
   "dependencies": {
     "razorpay": "^2.9.2"
+  },
+  "engines": {
+    "node": ">=18.x"
   }
 }
