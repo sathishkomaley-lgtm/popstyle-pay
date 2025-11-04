@@ -1,13 +1,20 @@
 {
-  "headers": [
+  "version": 2,
+  "builds": [
     {
-      "source": "/api/(.*)",
-      "headers": [
-        { "key": "Access-Control-Allow-Credentials", "value": "true" },
-        { "key": "Access-Control-Allow-Origin", "value": "*" },
-        { "key": "Access-Control-Allow-Methods", "value": "GET,OPTIONS,PATCH,DELETE,POST,PUT" },
-        { "key": "Access-Control-Allow-Headers", "value": "X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version, Authorization" }
-      ]
+      "src": "api/**/*.js",
+      "use": "@vercel/node"
     }
-  ]
+  ],
+  "routes": [
+    {
+      "src": "/api/(.*)",
+      "dest": "/api/$1"
+    }
+  ],
+  "env": {
+    "RAZORPAY_KEY_ID": "@razorpay_key_id",
+    "RAZORPAY_KEY_SECRET": "@razorpay_key_secret",
+    "RAZORPAY_WEBHOOK_SECRET": "@razorpay_webhook_secret"
+  }
 }
